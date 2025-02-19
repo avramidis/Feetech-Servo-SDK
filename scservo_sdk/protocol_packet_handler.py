@@ -60,7 +60,7 @@ class protocol_packet_handler(object):
 
         if error & ERRBIT_OVERELE:
             return "[RxPacketError] OverEle error!"
-        
+
         if error & ERRBIT_OVERLOAD:
             return "[RxPacketError] Overload error!"
 
@@ -89,7 +89,7 @@ class protocol_packet_handler(object):
 
         txpacket[total_packet_length - 1] = ~checksum & 0xFF
 
-        #print "[TxPacket] %r" % txpacket
+        # print "[TxPacket] %r" % txpacket
 
         # tx packet
         port.clearPort()
@@ -114,7 +114,7 @@ class protocol_packet_handler(object):
             if rx_length >= wait_length:
                 # find packet header
                 for idx in range(0, (rx_length - 1)):
-                    if (rxpacket[idx] == 0xFF) and (rxpacket[idx + 1] == 0xFF):
+                    if (rxpacket[idx] == 0xFF) and (rxpacket[idx + 1] == 0xF5):
                         break
 
                 if idx == 0:  # found at the beginning of the packet
@@ -170,7 +170,7 @@ class protocol_packet_handler(object):
 
         port.is_using = False
 
-        #print "[RxPacket] %r" % rxpacket
+        # print "[RxPacket] %r" % rxpacket
 
         return rxpacket, result
 
@@ -195,13 +195,16 @@ class protocol_packet_handler(object):
             port.setPacketTimeout(6)  # HEADER0 HEADER1 ID LENGTH ERROR CHECKSUM
 
         # rx packet
-        while True:
-            rxpacket, result = self.rxPacket(port)
-            if result != COMM_SUCCESS or txpacket[PKT_ID] == rxpacket[PKT_ID]:
-                break
+        if txpacket[PKT_INSTRUCTION] == INST_READ:
+            while True:
+                rxpacket, result = self.rxPacket(port)
+                if result != COMM_SUCCESS or txpacket[PKT_ID] == rxpacket[PKT_ID]:
+                    break
 
-        if result == COMM_SUCCESS and txpacket[PKT_ID] == rxpacket[PKT_ID]:
-            error = rxpacket[PKT_ERROR]
+            if result == COMM_SUCCESS and txpacket[PKT_ID] == rxpacket[PKT_ID]:
+                error = rxpacket[PKT_ERROR]
+        else:
+            port.is_using = False
 
         return rxpacket, result, error
 
@@ -220,10 +223,10 @@ class protocol_packet_handler(object):
 
         rxpacket, result, error = self.txRxPacket(port, txpacket)
 
-        if result == COMM_SUCCESS:
-            data_read, result, error = self.readTxRx(port, scs_id, 3, 2)  # Address 3 : Model Number
-            if result == COMM_SUCCESS:
-                model_number = SCS_MAKEWORD(data_read[0], data_read[1])
+        # if result == COMM_SUCCESS:
+        #     data_read, result, error = self.readTxRx(port, scs_id, 3, 2)  # Address 3 : Model Number
+        #     if result == COMM_SUCCESS:
+        #         model_number = SCS_MAKEWORD(data_read[0], data_read[1])
 
         return model_number, result, error
 
@@ -382,7 +385,8 @@ class protocol_packet_handler(object):
         return self.writeTxOnly(port, scs_id, address, 2, data_write)
 
     def write2ByteTxRx(self, port, scs_id, address, data):
-        data_write = [SCS_LOBYTE(data), SCS_HIBYTE(data)]
+        # data_write = [SCS_LOBYTE(data), SCS_HIBYTE(data)]
+        data_write = [SCS_HIBYTE(data), SCS_LOBYTE(data)]
         return self.writeTxRx(port, scs_id, address, 2, data_write)
 
     def write4ByteTxOnly(self, port, scs_id, address, data):
@@ -445,7 +449,6 @@ class protocol_packet_handler(object):
             port.setPacketTimeout((6 + data_length) * param_length)
 
         return result
-
 
     def syncWriteTxOnly(self, port, start_address, data_length, param, param_length):
         txpacket = [0] * (param_length + 8)

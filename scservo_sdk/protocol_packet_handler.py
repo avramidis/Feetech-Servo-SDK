@@ -326,7 +326,9 @@ class protocol_packet_handler(object):
 
     def read2ByteTxRx(self, port, scs_id, address):
         data, result, error = self.readTxRx(port, scs_id, address, 2)
-        data_read = SCS_MAKEWORD(data[0], data[1]) if (result == COMM_SUCCESS) else 0
+        # data_read = SCS_MAKEWORD(data[0], data[1]) if (result == COMM_SUCCESS) else 0
+        data_read = SCS_MAKEWORD(data[1], data[0]) if (result == COMM_SUCCESS) else 0
+        # print(f"data[0]={data[0]} data[1]={data[1]}")
         return data_read, result, error
 
     def read4ByteTx(self, port, scs_id, address):

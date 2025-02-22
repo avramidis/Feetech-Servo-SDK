@@ -195,7 +195,7 @@ class protocol_packet_handler(object):
             port.setPacketTimeout(6)  # HEADER0 HEADER1 ID LENGTH ERROR CHECKSUM
 
         # rx packet
-        if txpacket[PKT_INSTRUCTION] == INST_READ:
+        if txpacket[PKT_INSTRUCTION] == INST_READ or txpacket[PKT_INSTRUCTION] == INST_PING or txpacket[PKT_INSTRUCTION] == INST_RESET:
             while True:
                 rxpacket, result = self.rxPacket(port)
                 if result != COMM_SUCCESS or txpacket[PKT_ID] == rxpacket[PKT_ID]:
@@ -229,6 +229,24 @@ class protocol_packet_handler(object):
         #         model_number = SCS_MAKEWORD(data_read[0], data_read[1])
 
         return model_number, result, error
+
+    def reset(self, port, scs_id):
+        model_number = 0
+        error = 0
+
+        txpacket = [0] * 6
+
+        if scs_id >= BROADCAST_ID:
+            return model_number, COMM_NOT_AVAILABLE, error
+
+        txpacket[PKT_ID] = scs_id
+        txpacket[PKT_LENGTH] = 2
+        txpacket[PKT_INSTRUCTION] = INST_RESET
+
+        rxpacket, result, error = self.txRxPacket(port, txpacket)
+
+        return model_number, result, error
+
 
     def action(self, port, scs_id):
         txpacket = [0] * 6

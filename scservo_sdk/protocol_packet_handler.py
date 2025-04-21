@@ -417,10 +417,11 @@ class protocol_packet_handler(object):
         return self.writeTxOnly(port, scs_id, address, 4, data_write)
 
     def write4ByteTxRx(self, port, scs_id, address, data):
-        data_write = [SCS_LOBYTE(SCS_LOWORD(data)),
-                      SCS_HIBYTE(SCS_LOWORD(data)),
-                      SCS_LOBYTE(SCS_HIWORD(data)),
-                      SCS_HIBYTE(SCS_HIWORD(data))]
+        data_write = [SCS_HIBYTE(SCS_LOWORD(data)),
+                      SCS_LOBYTE(SCS_LOWORD(data)),
+                      SCS_HIBYTE(SCS_HIWORD(data)),
+                      SCS_LOBYTE(SCS_HIWORD(data))]
+
         return self.writeTxRx(port, scs_id, address, 4, data_write)
 
     def regWriteTxOnly(self, port, scs_id, address, length, data):
